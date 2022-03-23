@@ -1,0 +1,8 @@
+body{
+	color: #fff;
+	background-color: #4F8BF9;
+}
+
+match-output{
+	background-color:#009dc4;
+}

@@ -183,11 +183,11 @@ if button_clicked:
         probable_match = ''
         if len(most_probable_match.index)>10:
             for i in range(10):
-                probable_match += "Sanctioned Name: " + most_probable_match['Match'].iloc[i] + ', Score: ' + str(most_probable_match['Score'].iloc[i]) + "<br>"
+                probable_match += "Name: " + most_probable_match['Match'].iloc[i] + ', Score: ' + str(most_probable_match['Score'].iloc[i]) + "<br>"
                 #st.write(probable_match)
         else:
             for j in range(0,len(most_probable_match.index)):
-                probable_match += "Sanctioned Name: " + most_probable_match['Match'].iloc[j] + ', Score: ' + str(most_probable_match['Score'].iloc[j]) + "<br>"
+                probable_match += "Name: " + most_probable_match['Match'].iloc[j] + ', Score: ' + str(most_probable_match['Score'].iloc[j]) + "<br>"
                 #st.write(probable_match)
         st.markdown(
                     f"<h5 style='text-align: left; width:80%; padding: 20px; border-radius: 5px; color: black; background-color:#F4C2C2; margin:0px;'> \

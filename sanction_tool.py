@@ -8,12 +8,6 @@ from cleanco import basename
 import requests
 import itertools
 
-# include css file
-def css_file(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-
-css_file('style.css')
 
 st.title("Inchcape Sanction List Tool")
 
@@ -128,10 +122,9 @@ def clean_company_legal_entities(entity_name):
     return entity_name.strip()
 
 # Entity matching based on sanction list and entered name by user
-@st.cache
+#@st.cache
 def entity_matching(search_name, uk_sanction_list):    
     df = pd.DataFrame(columns=['Match','Score'])
-    fl_dict = {}
     t_dict={}
     sorted_dict = {}
     search_name = clean_company_legal_entities(search_name)
@@ -156,22 +149,67 @@ if button_clicked:
     matched = entity_matching(search_name,uk_sanction_list)
     top_match = matched.loc[matched['Score']>95]
     if top_match.empty == False:
-        top_match.index+=1
-        #top_match = top_match['Match'].to_string(index=False)
-        st.header("Top Match")
-        st.write(top_match['Match'])
-        #st.markdown(f'<i class="match-output">{top_match["Match"]}</i>',unsafe_allow_html=True)
+        top_match = top_match.sort_values('Score',ascending=False)
+        #st.header("Top Match")
+        #st.write(top_match['Match'])
+        st.markdown(
+                    f"<h5 style='text-align: left; width:80%; padding: 20px; border-radius: 5px; color: black; background-color:rgba(173,216,230,.8); margin:0px;'> \
+                        <b> Top Match </b> \
+                        <ul> \
+                        <li>Sanctioned Name : {top_match['Match'].iloc[0]}</li> \
+                        <li>Score : {top_match['Score'].iloc[0]}</li> \
+                        </ul> \
+                    </h5> \
+                    ",
+                    unsafe_allow_html=True
+                    )
     else:
-        most_probable_match = matched.loc[(matched['Score']>90) & (matched['Score']<=95)]
-        #most_probable_match = most_probable_match['Match'].to_string(index=False)
-        if most_probable_match.empty == False:
-            most_probable_match.index+=1
-            st.header("Most Probable Match")
-            st.write(most_probable_match['Match'])
-            #st.markdown(f'<i class="match-output">{most_probable_match["Match"]}</i>',unsafe_allow_html=True)
+        st.markdown(
+                    f"<h5 style='text-align: left; width:80%; padding: 20px; border-radius: 5px; color: black; background-color:rgba(173,216,230,.8); margin:0px;'> \
+                        <b> Top Match </b> \
+                        <ul> \
+                        <li>No Match</li> \
+                        </ul> \
+                    </h5> \
+                    ",
+                    unsafe_allow_html=True
+                    )
+    most_probable_match = matched.loc[(matched['Score']>20) & (matched['Score']<=100)]
+    st.title("")
+    if most_probable_match.empty == False:
+        most_probable_match = most_probable_match.sort_values('Score',ascending=False)
+        #st.header("Most Probable Match")
+        #st.write(most_probable_match['Match'])
+        probable_match = ''
+        if len(most_probable_match.index)>10:
+            for i in range(10):
+                probable_match += "Sanctioned Name: " + most_probable_match['Match'].iloc[i] + ', Score: ' + str(most_probable_match['Score'].iloc[i]) + "<br>"
+                #st.write(probable_match)
         else:
-            st.markdown(f'<i class="match-output">{"No Match"}</i>',unsafe_allow_html=True)
-            #st.write("No Matches")
+            for j in range(0,len(most_probable_match.index)):
+                probable_match += "Sanctioned Name: " + most_probable_match['Match'].iloc[j] + ', Score: ' + str(most_probable_match['Score'].iloc[j]) + "<br>"
+                #st.write(probable_match)
+        st.markdown(
+                    f"<h5 style='text-align: left; width:80%; padding: 20px; border-radius: 5px; color: black; background-color:#F4C2C2; margin:0px;'> \
+                        <b> Probable Match </b> \
+                        <ul> \
+                        <li>{probable_match}</li> \
+                        </ul> \
+                    </h5> \
+                    ",
+                    unsafe_allow_html=True
+                    )
+    else:
+        st.markdown(
+                    f"<h5 style='text-align: left; width:8  0%; padding: 20px; border-radius: 5px; color: black; background-color:#F4C2C2; margin:0px;'> \
+                        <b> Probable Match </b> \
+                        <ul> \
+                        <li>No Match</li> \
+                        </ul> \
+                    </h5> \
+                    ",
+                    unsafe_allow_html=True
+                    )
 
 # function for uploaded supplier list
 #@st.cache

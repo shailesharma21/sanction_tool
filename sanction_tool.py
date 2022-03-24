@@ -3,22 +3,28 @@ import pandas as pd
 import numpy as np
 from matching_utils import f_name_match_score
 from utils import scrape_uk_sanctions
-from config import uk_sanctions_url
 import requests
 import itertools
+from pandas_ods_reader import read_ods
 
 
-st.title("Inchcape Supplier Sanctions Checker")
+st.header("Inchcape Supplier Sanctions Checker")
+
 
 # load uk sanction list
 @st.cache
 def uk_sanction_data_load(sanctions_file):
-    df = pd.read_excel(sanctions_file, engine="odf", skiprows=1, header=1)
-    # ! why this filter
-    uk_sanctions = df.loc[df["Unique ID"].str.startswith("RUS")]
-    uk_sanction = uk_sanctions.loc[uk_sanctions["Individual, Entity, Ship"] == "Entity"]
-    return uk_sanction
+    df2 = read_ods(sanctions_file)
+    df2 = df2.iloc[1:]
+    df2.columns = df2.iloc[0]
+    df2 = df2.drop(df2.index[0])
+    #uk_sanctions = df2.loc[df2['Unique ID'].str.startswith('RUS')]
+    uk_sanctions = df2.loc[df2['Individual, Entity, Ship']=='Entity']
+    return uk_sanctions
 
+# load uk sanctioned data
+scrape_uk_sanctions()
+uk_sanction_list = uk_sanction_data_load("UK_Sanctions_List.ods")
 
 # Entity matching based on sanction list and entered name by user
 # @st.cache
@@ -37,8 +43,7 @@ def entity_matching(search_name, uk_sanction_list):
     return df
 
 
-# load uk sanctioned data
-uk_sanction_list = uk_sanction_data_load("UK_Sanctions_List.ods")
+
 
 # search for the name
 search_name = st.text_input("Enter Supplier Name", "")
@@ -87,7 +92,7 @@ if button_clicked:
                 probable_match += (
                     "Name: "
                     + most_probable_match["Match"].iloc[i]
-                    + ", Score: "
+                    + ", "
                     + str(most_probable_match["Score"].iloc[i])
                     + "<br>"
                 )
@@ -97,7 +102,7 @@ if button_clicked:
                 probable_match += (
                     "Name: "
                     + most_probable_match["Match"].iloc[j]
-                    + ", Score: "
+                    + ", "
                     + str(most_probable_match["Score"].iloc[j])
                     + "<br>"
                 )

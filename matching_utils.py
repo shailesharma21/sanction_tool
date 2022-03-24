@@ -1,5 +1,4 @@
 import re
-
 from bleach import clean
 from fuzzywuzzy import fuzz
 import jellyfish as jf
@@ -59,8 +58,6 @@ def f_name_match_score(str1, str2):
         str2 = clean_company_legal_entities(str2)
         str1 = f_get_modified_str(str1)
         str2 = f_get_modified_str(str2)
-        print(str1)
-        print(str2)
         # Convert to unicode to avoid error
         str1 = to_unicode(str1)
         str2 = to_unicode(str2)

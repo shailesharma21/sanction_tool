@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from matching_utils import f_name_match_score
 from utils import scrape_uk_sanctions
-import requests
+from config import sanction_file_name
 import itertools
 from pandas_ods_reader import read_ods
 
@@ -14,6 +14,7 @@ st.header("Inchcape Supplier Sanctions Checker")
 # load uk sanction list
 @st.cache
 def uk_sanction_data_load(sanctions_file):
+    scrape_uk_sanctions()
     df2 = read_ods(sanctions_file)
     df2 = df2.iloc[1:]
     df2.columns = df2.iloc[0]
@@ -23,23 +24,23 @@ def uk_sanction_data_load(sanctions_file):
     return uk_sanctions
 
 # load uk sanctioned data
-scrape_uk_sanctions()
-uk_sanction_list = uk_sanction_data_load("UK_Sanctions_List.ods")
+uk_sanction_list = uk_sanction_data_load(sanction_file_name)
 
 # Entity matching based on sanction list and entered name by user
-# @st.cache
+@st.cache
 def entity_matching(search_name, uk_sanction_list):
-    df = pd.DataFrame(columns=["Match", "Score"])
     t_dict = {}
-    sorted_dict = {}
-    for j in uk_sanction_list["Name 6"]:
+    for j,cc in zip(uk_sanction_list['Name 6'],uk_sanction_list['Unique ID']):
         if j not in t_dict.keys():
-            t_dict[j] = f_name_match_score(search_name, j)
-    sorted_dict = sorted(t_dict.items(), key=lambda kv: kv[1], reverse=True)
-    lst = sorted_dict[:5]
-    for i in range(0, len(lst)):
-        df = df.append({"Match": lst[i][0], "Score": lst[i][1]}, ignore_index=True)
-        df = df[~df.index.duplicated(keep="first")]
+            t_dict[j,cc] = int(f_name_match_score(search_name, j))
+    lst = list(t_dict.items())
+    df = pd.DataFrame(lst,columns=["sanction name","Score"])
+    df[["Match","Country Code"]] = pd.DataFrame(
+        df["sanction name"].tolist(),
+        index=df.index
+    )
+    df.drop(df.columns[0],axis=1,inplace=True)
+    df.drop_duplicates(keep="first",inplace=True)
     return df
 
 
@@ -51,7 +52,7 @@ button_clicked = st.button("Search")
 st.markdown("---")
 if button_clicked:
     matched = entity_matching(search_name, uk_sanction_list)
-    top_match = matched.loc[matched["Score"] > 95]
+    top_match = matched.loc[matched["Score"] >= 95]
     if top_match.empty == False:
         top_match = top_match.sort_values("Score", ascending=False)
         # st.header("Top Match")
@@ -61,6 +62,7 @@ if button_clicked:
                         <b> Top Match </b> \
                         <ul> \
                         <li>Sanctioned Name : {top_match['Match'].iloc[0]}</li> \
+                        <li>Country Code : {top_match['Country Code'].iloc[0]}</li> \
                         <li>Score : {top_match['Score'].iloc[0]}</li> \
                         </ul> \
                     </h5> \
@@ -79,7 +81,7 @@ if button_clicked:
             unsafe_allow_html=True,
         )
     most_probable_match = matched.loc[
-        (matched["Score"] > 20) & (matched["Score"] <= 100)
+        (matched["Score"] > 60) & (matched["Score"] < 95)
     ]
     st.title("")
     if most_probable_match.empty == False:
@@ -93,6 +95,8 @@ if button_clicked:
                     "Name: "
                     + most_probable_match["Match"].iloc[i]
                     + ", "
+                    + most_probable_match["Country Code"].iloc[i]
+                    + ", "
                     + str(most_probable_match["Score"].iloc[i])
                     + "<br>"
                 )
@@ -102,6 +106,8 @@ if button_clicked:
                 probable_match += (
                     "Name: "
                     + most_probable_match["Match"].iloc[j]
+                    + ", "
+                    + most_probable_match["Country Code"].iloc[j]
                     + ", "
                     + str(most_probable_match["Score"].iloc[j])
                     + "<br>"
@@ -154,7 +160,7 @@ def entity_matching_for_streamlit(supplier_list, uk_sanction_list):
 # Upload a supplier list
 
 uploaded_file = st.file_uploader(
-    "If you a list of suppliers in a .csv file, Please upload below", type="csv"
+    "If you have a list of suppliers in a .csv file, Please upload below", type="csv"
 )
 if uploaded_file is not None:
     st.write("File uploaded")

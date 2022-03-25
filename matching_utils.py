@@ -93,10 +93,11 @@ def clean_company_legal_entities(entity_name):
         "AO",
     ]
     rp = [legal_name.lower() for legal_name in rp]
+    entity_name = entity_name.strip().lower()
     for k in rp:
         if k in entity_name:
             entity_name = entity_name.replace(k, "")
     # Using basename twice for better clean
-    entity_name = basename(entity_name)
-    entity_name = basename(entity_name)
+    if basename(entity_name) != '':
+        entity_name = basename(entity_name)
     return entity_name.strip()
